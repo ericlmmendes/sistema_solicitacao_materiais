@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Solicitação de Materiais</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<style>
+  :root {
+    --primary: #1a56db;
+    --primary-dark: #1e40af;
+    --success: #059669;
+    --danger: #dc2626;
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --muted: #64748b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    padding: 20px;
+  }
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 1.75rem;
+    margin-bottom: 8px;
+    color: var(--primary);
+  }
+  h1 .fa-icon { /* Estilo para ícones no h1 */
+    margin-right: 10px;
+    color: var(--primary);
+  }
+  .subtitle {
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .header-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+  input[type="text"], input[type="number"] {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.15s;
+  }
+  input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.15);
+  }
+  .search-row {
+    display: grid;
+    grid-template-columns: 1fr 120px 140px;
+    gap: 12px;
+    align-items: end;
+  }
+  /* Novo estilo para o seletor de unidade */
+  .qty-unit-select {
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 1rem;
+    appearance: none; /* Remove seta padrão */
+    background-color: white;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2364748b'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.5em 1.5em;
+    cursor: pointer;
+    min-width: 100px; /* Ajuste para caber as opções */
+  }
+  .qty-unit-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.15);
+  }
+
+  .btn {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn i { /* Estilo para ícones dentro dos botões */
+    margin-right: 8px;
+  }
+  .btn-primary {
+    background: var(--primary);
+    color: white;
+  }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-success {
+    background: var(--success);
+    color: white;
+  }
+  .btn-success:hover { background: #047857; }
+  .btn-danger {
+    background: var(--danger);
+    color: white;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+  .btn-danger:hover { background: #b91c1c; }
+  .btn-outline {
+    background: white;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .btn-outline:hover { background: var(--bg); }
+  .suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    max-height: 280px;
+    overflow-y: auto;
+    z-index: 50;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    display: none;
+  }
+  .suggestions.show { display: block; }
+  .suggestion-item {
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+  }
+  .suggestion-item:hover, .suggestion-item.active {
+    background: #eff6ff;
+  }
+  .suggestion-item .codes {
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .search-wrap { position: relative; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  th, td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    background: #f1f5f9;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--muted);
+  }
+  tr:hover td { background: #f8fafc; }
+  .qty-input {
+    width: 80px;
+    padding: 6px 8px;
+    text-align: center;
+  }
+  .actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+  .empty {
+    text-align: center;
+    padding: 40px;
+    color: var(--muted);
+  }
+  .count-badge {
+    display: inline-block;
+    background: var(--primary);
+    color: white;
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin-left: 8px;
+  }
+
+  /* Print styles */
+  @media print {
+    body { background: white; padding: 0; }
+    .no-print { display: none !important; }
+    .card { border: none; box-shadow: none; padding: 0; }
+    .print-only { display: block !important; }
+    table { font-size: 12px; }
+    th, td { padding: 6px 8px; }
+    h1 { font-size: 18pt; }
+  }
+  .print-only { display: none; }
+  .print-header {
+    margin-bottom: 20px;
+    border-bottom: 2px solid #333;
+    padding-bottom: 12px;
+  }
+  .print-header h1 {
+    color: #111;
+    margin-bottom: 8px;
+  }
+  .print-meta {
+    display: flex;
+    gap: 40px;
+    font-size: 14px;
+  }
+  .print-meta strong { min-width: 80px; display: inline-block; }
+
+  /* New: Responsive adjustments for smaller screens */
+  @media (max-width: 768px) {
+    body {
+      padding: 10px; /* Menor padding em telas pequenas */
+    }
+    .header-fields, .search-row {
+      grid-template-columns: 1fr; /* Colunas empilhadas */
+    }
+    .search-row > div:last-child { /* O div do botão de adicionar */
+      margin-top: 10px; /* Adiciona espaço acima do botão */
+    }
+    .search-row label { /* Ajusta espaçamento da label se empilhada */
+      margin-top: 10px;
+    }
+    .search-row label:first-child { /* Remove margem superior para a primeira label em cada grupo */
+      margin-top: 0;
+    }
+    .actions {
+      flex-direction: column; /* Botões empilhados */
+      gap: 8px; /* Reduz o espaçamento entre os botões */
+    }
+    .actions button {
+      width: 100%; /* Botões com largura total */
+    }
+    /* Torna a tabela responsiva horizontalmente */
+    #tabela-wrap {
+      overflow-x: auto;
+    }
+    /* Reduz o padding das células da tabela em telas pequenas */
+    th, td {
+      padding: 8px 10px;
+    }
+    /* Ajusta o min-width do select de unidade para telas menores */
+    .qty-unit-select {
+        min-width: 80px;
+        padding: 8px 10px;
+    }
+    .qty-input {
+        width: 60px; /* Menor largura para input de quantidade */
+        padding: 4px 6px;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1 class="no-print"><i class="fas fa-boxes fa-icon"></i> Sistema de Solicitação de Materiais</h1>
+  <p class="subtitle no-print">Digite o nome do produto, informe a quantidade e adicione à lista. No final gere a folha para impressão.</p>
+
+  <!-- Cabeçalho RQ / Galpão -->
+  <div class="card no-print">
+    <div class="header-fields">
+      <div>
+        <label for="rq">RQ</label>
+        <input type="text" id="rq" placeholder="Ex: 1234567890" autocomplete="off">
+      </div>
+      <div>
+        <label for="galpao">GALPÃO</label>
+        <input type="text" id="galpao" placeholder="Ex: Galpão A / CD01" autocomplete="off">
+      </div>
+    </div>
+  </div>
+
+  <!-- Busca e Adição -->
+  <div class="card no-print">
+    <div class="search-row">
+      <div class="search-wrap">
+        <label for="busca">Nome do produto</label>
+        <input type="text" id="busca" placeholder="Digite para buscar..." autocomplete="off">
+        <div class="suggestions" id="suggestions"></div>
+      </div>
+      <div>
+        <label for="qtd">Quantidade</label>
+        <div style="display: flex; gap: 8px;"> <!-- Novo container flex para qtd e unidade -->
+          <input type="number" id="qtd" min="1" value="1" style="flex-grow: 1;">
+          <select id="qtd-unit" class="qty-unit-select">
+            <option value="unidade">Unidade</option>
+            <option value="caixa">Caixa</option>
+            <option value="rolo">Rolo</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <button class="btn btn-primary" style="width:100%" onclick="adicionar()"><i class="fas fa-plus"></i> Adicionar</button>
+      </div>
+    </div>
+    <div id="produtoSelecionado" style="margin-top:12px;font-size:0.9rem;color:var(--muted);"></div>
+  </div>
+
+  <!-- Lista atual -->
+  <div class="card">
+    <div class="no-print" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h2 style="font-size:1.15rem;">Lista de itens <span class="count-badge" id="contador">0</span></h2>
+      <div>
+        <button class="btn btn-outline" onclick="limparLista()"><i class="fas fa-trash-alt"></i> Limpar lista</button>
+      </div>
+    </div>
+
+    <!-- Cabeçalho de impressão -->
+    <div class="print-only print-header">
+      <h1>FOLHA DE SOLICITAÇÃO DE MATERIAIS</h1>
+      <div class="print-meta">
+        <div><strong>RQ:</strong> <span id="print-rq">—</span></div>
+        <div><strong>GALPÃO:</strong> <span id="print-galpao">—</span></div>
+        <div><strong>Data:</strong> <span id="print-data"></span></div>
+      </div>
+    </div>
+
+    <div id="tabela-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:40px">#</th>
+            <th>Nome do produto</th>
+            <th>Código 1</th>
+            <th>Código 2</th>
+            <th style="width:100px">Quantidade / Unidade</th> <!-- Atualizado para incluir a unidade -->
+            <th class="no-print" style="width:90px">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="lista-body">
+          <tr id="empty-row"><td colspan="6" class="empty">Nenhum item adicionado ainda.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="actions no-print">
+      <button class="btn btn-success" onclick="gerarFolha()"><i class="fas fa-print"></i> Gerar Folha / Imprimir</button>
+      <button class="btn btn-primary" onclick="gerarPdfECompartilhar()"><i class="fab fa-whatsapp"></i> Gerar PDF e Compartilhar</button>
+      <button class="btn btn-outline" onclick="exportarCSV()"><i class="fas fa-file-csv"></i> Exportar CSV</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsIDXPi/oCbh2BZNhpCLsoJ8KOiSaFDUpHfcBgTp3ntugh/GxCacYJKzpQVaOgrGjmhrYGIAHE4CpM+5m5Aodw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+const PRODUTOS = [{"nome": "A4 (papel)", "codigo1": "I006771", "codigo2": "I002930"}, {"nome": "Abraçadeira plástica", "codigo1": "I000102", "codigo2": "I004744"}, {"nome": "Achocolatado", "codigo1": "I006844", "codigo2": "I002980"}, {"nome": "Adaptador de tomada", "codigo1": "I004914", "codigo2": "I004914"}, {"nome": "Adoçante", "codigo1": "I006677", "codigo2": "I006677"}, {"nome": "Agua sanitária 5l", "codigo1": "I001069", "codigo2": "I003051"}, {"nome": "Apoio para monitor", "codigo1": "A005551", "codigo2": "I004908"}, {"nome": "Apoio para os pés", "codigo1": "I006681", "codigo2": "I002992"}, {"nome": "Armário metal 16 portas", "codigo1": "A003531", "codigo2": "A003531"}, {"nome": "Armário metal chave", "codigo1": "I006682", "codigo2": "A003525"}, {"nome": "Açúcar", "codigo1": "I001067", "codigo2": "I002961"}, {"nome": "Balde espremedor", "codigo1": "I006683", "codigo2": "I005269"}, {"nome": "Bateria PDA", "codigo1": "I006121", "codigo2": "I006121"}, {"nome": "Bebedouro grande 4 saídas", "codigo1": "A000942", "codigo2": "A003945"}, {"nome": "Bebedouro pequeno 2 saídas", "codigo1": "A003459", "codigo2": "A003459"}, {"nome": "Borracha", "codigo1": "I006817", "codigo2": "I003112"}, {"nome": "Cabo para vassoura e rodo", "codigo1": "I003151", "codigo2": "I003151"}, {"nome": "Cadeado / Locker", "codigo1": "I006690", "codigo2": "I003005"}, {"nome": "Cadeira de escritório", "codigo1": "A003522", "codigo2": "A001678"}, {"nome": "Caderno", "codigo1": "I002988", "codigo2": "I002988"}, {"nome": "Café", "codigo1": "I006849", "codigo2": "I002933"}, {"nome": "Cage Car", "codigo1": "I005927", "codigo2": "A003647"}, {"nome": "Caixa plástica", "codigo1": "I006006", "codigo2": "I006006"}, {"nome": "Caneta azul", "codigo1": "I006694", "codigo2": "I002952"}, {"nome": "Canetão para quadro branco azul", "codigo1": "I006195", "codigo2": "I006195"}, {"nome": "Canetão para quadro branco preto", "codigo1": "I006196", "codigo2": "I006196"}, {"nome": "Canetão para quadro branco vermelho", "codigo1": "I006197", "codigo2": "I006197"}, {"nome": "Canetão permanente azul", "codigo1": "I006789", "codigo2": "I003080"}, {"nome": "Canetão permanente preto", "codigo1": "I003082", "codigo2": "I003082"}, {"nome": "Canetão permanente vermelho", "codigo1": "I003081", "codigo2": "I003081"}, {"nome": "Carregador USB para PDA / 30 entradas", "codigo1": "I006186", "codigo2": "I006186"}, {"nome": "Cerca de isolamento", "codigo1": "I005462", "codigo2": "A003169"}, {"nome": "Chá de camomila", "codigo1": "I006700", "codigo2": "I003030"}, {"nome": "Chá mate", "codigo1": "I006701", "codigo2": "I003032"}, {"nome": "Clips nº 2/0", "codigo1": "I006703", "codigo2": "I003073"}, {"nome": "Clips nº 4/0", "codigo1": "I006704", "codigo2": "I003069"}, {"nome": "Cola bastão", "codigo1": "I006853", "codigo2": "I003099"}, {"nome": "Cola branca líquida", "codigo1": "I006820", "codigo2": "I003109"}, {"nome": "Copo descartável 200ml", "codigo1": "I006713", "codigo2": "I002939"}, {"nome": "Corretivo (branquinho)", "codigo1": "I006715", "codigo2": "I003101"}, {"nome": "Desinfetante 5L", "codigo1": "I003012", "codigo2": "I003012"}, {"nome": "Desktop para a operação", "codigo1": "A004812", "codigo2": "A003948"}, {"nome": "Detergente 500ml", "codigo1": "I006718", "codigo2": "I006718"}, {"nome": "Detergente 5l", "codigo1": "I002996", "codigo2": "I002996"}, {"nome": "Dispenser para papel higiênico", "codigo1": "I006724", "codigo2": "I002951"}, {"nome": "Dispenser para papel toalha interfolhada", "codigo1": "I006720", "codigo2": "I002982"}, {"nome": "Dispenser álcool gel", "codigo1": "I002964", "codigo2": "I002964"}, {"nome": "Embalagem plástica 100×60", "codigo1": "I004064", "codigo2": "I004064"}, {"nome": "Embalagem plástica 19x25", "codigo1": "I004178", "codigo2": "I004178"}, {"nome": "Embalagem plástica 32x40", "codigo1": "I003869", "codigo2": "I003869"}, {"nome": "Embalagem plástica 50x70", "codigo1": "I003868", "codigo2": "I003868"}, {"nome": "Embalagem plástica 70x90", "codigo1": "A002931", "codigo2": "A002931"}, {"nome": "Envelope papel pardo A4", "codigo1": "I006823", "codigo2": "I003076"}, {"nome": "Envelope saco Kraft 229x324", "codigo1": "I003077", "codigo2": "I003077"}, {"nome": "Envelope saco Kraft 240x340", "codigo1": "I003076", "codigo2": "I003076"}, {"nome": "Escada 6 degraus", "codigo1": "I006728", "codigo2": "I002979"}, {"nome": "Escova sanitária", "codigo1": "I001109", "codigo2": "I003093"}, {"nome": "Esponja", "codigo1": "I006730", "codigo2": "I003108"}, {"nome": "Esponja macia", "codigo1": "I006730", "codigo2": "I006730"}, {"nome": "Estilete De Segurança Bico De Pato", "codigo1": "I005267", "codigo2": "I005267"}, {"nome": "Estilete plástico lamina larga", "codigo1": "I001112", "codigo2": "I003117"}, {"nome": "Etiqueta Adesiva Pimaco 6183 PCT 100fls", "codigo1": "I006732", "codigo2": "I003010"}, {"nome": "Etiqueta térmica 100x150 amarela", "codigo1": "", "codigo2": ""}, {"nome": "Etiqueta térmica 100x150 azul", "codigo1": "", "codigo2": ""}, {"nome": "Etiqueta térmica 100×150 colorida", "codigo1": "I004616", "codigo2": "I004616"}, {"nome": "Etiqueta térmica 100×70 branca", "codigo1": "I004617", "codigo2": "I004617"}, {"nome": "Etiqueta térmica 100×70 colorida", "codigo1": "I004618", "codigo2": "I004618"}, {"nome": "Extensão elétrica 3 tomadas", "codigo1": "I006826", "codigo2": "I003003"}, {"nome": "Extrator de grampos", "codigo1": "I006733", "codigo2": "I003118"}, {"nome": "Filme stretch", "codigo1": "I005381", "codigo2": "I005381"}, {"nome": "Filtro de linha", "codigo1": "I002972", "codigo2": "I004887"}, {"nome": "Filtro de papel para café", "codigo1": "I003024", "codigo2": "I003024"}, {"nome": "Fita adesiva amarela", "codigo1": "", "codigo2": ""}, {"nome": "Fita adesiva azul", "codigo1": "", "codigo2": ""}, {"nome": "Fita adesiva vermelha", "codigo1": "", "codigo2": ""}, {"nome": "Fita transparente", "codigo1": "I006735", "codigo2": "I004467"}, {"nome": "Fita zebrada preta/amarela adesiva", "codigo1": "I004557", "codigo2": "I004557"}, {"nome": "Fita zebrada preta/amarela solo", "codigo1": "I006737", "codigo2": "I004880"}, {"nome": "Flanela", "codigo1": "I006829", "codigo2": "I006829"}, {"nome": "Frasco (Freeco)", "codigo1": "I006685", "codigo2": "I002974"}, {"nome": "Garrafa térmica", "codigo1": "I002977", "codigo2": "I002977"}, {"nome": "Geladeira", "codigo1": "A002803", "codigo2": "A002803"}, {"nome": "Grampeador", "codigo1": "I006739", "codigo2": "I003065"}, {"nome": "Grampos", "codigo1": "I006741", "codigo2": "I003114"}, {"nome": "Guardanapo", "codigo1": "I003027", "codigo2": "I003027"}, {"nome": "Impressora térmica", "codigo1": "A002721", "codigo2": "A002721"}, {"nome": "Inseticida", "codigo1": "I003048", "codigo2": "I003048"}, {"nome": "JBL (estrutura de separação)", "codigo1": "I006492", "codigo2": "A003649"}, {"nome": "Kit teclado + mouse sem fio", "codigo1": "I002932", "codigo2": "I002932"}, {"nome": "Lacre amarelo", "codigo1": "I003276", "codigo2": "I003276"}, {"nome": "Lacre branco", "codigo1": "I004364", "codigo2": "I004364"}, {"nome": "Lacre metálico", "codigo1": "I003942", "codigo2": "I003942"}, {"nome": "Leite em pó", "codigo1": "I006749", "codigo2": "I002987"}, {"nome": "Limpa vidro", "codigo1": "I006835", "codigo2": "I006835"}, {"nome": "Lixeira grande", "codigo1": "I006752", "codigo2": "I002956"}, {"nome": "Lixeira média", "codigo1": "I002981", "codigo2": "I002981"}, {"nome": "Lixeira para copos 2 tubos", "codigo1": "I002962", "codigo2": "I002962"}, {"nome": "Lixeira preta pequena", "codigo1": "I003025", "codigo2": "I003025"}, {"nome": "Longarina com 4 lugares", "codigo1": "A001678", "codigo2": "A001678"}, {"nome": "Luminária", "codigo1": "I003020", "codigo2": "I003020"}, {"nome": "Luva G", "codigo1": "I006754", "codigo2": "I003139"}, {"nome": "Luvas limpeza G", "codigo1": "I006755", "codigo2": "I003140"}, {"nome": "Luvas limpeza M", "codigo1": "I006069", "codigo2": "I006069"}, {"nome": "Lápis preto com borracha", "codigo1": "I006748", "codigo2": "I003013"}, {"nome": "Lã de aço", "codigo1": "I003070", "codigo2": "I003070"}, {"nome": "Marmiteiro elétrico", "codigo1": "", "codigo2": ""}, {"nome": "Mesa de escritório individual", "codigo1": "I001829", "codigo2": "I001829"}, {"nome": "Mesa de refeitório p/12 pessoas", "codigo1": "A003562", "codigo2": "A003562"}, {"nome": "Mesa grande para reunião ou operação 2 metros", "codigo1": "I002936", "codigo2": "I002936"}, {"nome": "Mexedor de café", "codigo1": "I002936", "codigo2": "I002931"}, {"nome": "Micro-ondas", "codigo1": "A003502", "codigo2": "A003502"}, {"nome": "Monitor 21'5", "codigo1": "I003018", "codigo2": "I003018"}, {"nome": "Mouse Pad com Apoio Ergonômico", "codigo1": "I003019", "codigo2": "I003019"}, {"nome": "Mouse USB", "codigo1": "I006760", "codigo2": "I003018"}, {"nome": "Multiuso 500ml", "codigo1": "I006836", "codigo2": "I006836"}, {"nome": "Organizador de mesa (porta-canetas)", "codigo1": "I006798", "codigo2": "I003022"}, {"nome": "Paleteira hidráulica", "codigo1": "A000911", "codigo2": "A000911"}, {"nome": "Pallet 1,00 x 1,20", "codigo1": "I001933", "codigo2": "I001933"}, {"nome": "Pano de limpeza azul xadrez", "codigo1": "I006770", "codigo2": "I004910"}, {"nome": "Pano de limpeza branco alvejado", "codigo1": "I006858", "codigo2": "I004911/I003047"}, {"nome": "Panos Multiuso Perfex 600 units", "codigo1": "I004913", "codigo2": "I004913"}, {"nome": "Papel higiênico 250 metros folha dupla", "codigo1": "I006859", "codigo2": "I003001"}, {"nome": "Papel toalha bobina", "codigo1": "I006775", "codigo2": "I003119"}, {"nome": "Papel toalha interfolha", "codigo1": "I006773", "codigo2": "I003128"}, {"nome": "Pasta L para documentos", "codigo1": "I006782", "codigo2": "I003116"}, {"nome": "PDA", "codigo1": "A001843", "codigo2": "A001843"}, {"nome": "Pedra sanitária", "codigo1": "I003102", "codigo2": "I003102"}, {"nome": "Pilhas AA", "codigo1": "I006788", "codigo2": "I002983"}, {"nome": "Pilhas AAA", "codigo1": "I006787", "codigo2": "I003087"}, {"nome": "Placa de sinalização piso molhado", "codigo1": "I003011", "codigo2": "I003011"}, {"nome": "Post-it grande", "codigo1": "I003075", "codigo2": "I003075"}, {"nome": "Post-it pequeno (4 unidades)", "codigo1": "I003063", "codigo2": "I003063"}, {"nome": "Prancheta", "codigo1": "I006799", "codigo2": "I003062"}, {"nome": "Pulverizador", "codigo1": "I003061", "codigo2": "I003061"}, {"nome": "Pá para lixo", "codigo1": "I006764", "codigo2": "I003046"}, {"nome": "Quadro branco", "codigo1": "I006800", "codigo2": "I002986"}, {"nome": "Rack / Estante (mini porta pallet)", "codigo1": "A003506", "codigo2": "A003506"}, {"nome": "Rodo c/cabo 40cm", "codigo1": "I003039", "codigo2": "I003039"}, {"nome": "Rodo s/cabo 60cm", "codigo1": "I006803", "codigo2": "I003040"}, {"nome": "Rádio comunicador", "codigo1": "A004973", "codigo2": "A004973"}, {"nome": "Ráfia (Woven Bag) laminada", "codigo1": "I000816", "codigo2": "I000816"}, {"nome": "Régua transparente", "codigo1": "I006840", "codigo2": "I006840"}, {"nome": "Sabonete 5L", "codigo1": "I003100", "codigo2": "I003100"}, {"nome": "Sabão em pó", "codigo1": "I001178", "codigo2": "I003058"}, {"nome": "Saco de lixo preto 110L", "codigo1": "I002943", "codigo2": "I002943"}, {"nome": "Saco de lixo preto 50L", "codigo1": "I003135", "codigo2": "I003135"}, {"nome": "Saco de lixo transparente 110L", "codigo1": "I002938", "codigo2": "I002938"}, {"nome": "Saco de lixo transparente 50L", "codigo1": "I002946", "codigo2": "I002946"}, {"nome": "Saco plástico A4", "codigo1": "I003007", "codigo2": "I003007"}, {"nome": "Scanner / Leitor de código de barras", "codigo1": "I005479", "codigo2": "I005479"}, {"nome": "Suporte para laptop", "codigo1": "I006809", "codigo2": "I002937"}, {"nome": "Suporte para TV", "codigo1": "I006812", "codigo2": "I002941"}, {"nome": "Tesoura", "codigo1": "A005554", "codigo2": "I003074"}, {"nome": "Toner", "codigo1": "I005340", "codigo2": "I005340"}, {"nome": "Transformador", "codigo1": "I006870", "codigo2": "I002190"}, {"nome": "Trena", "codigo1": "I006840", "codigo2": "I006840"}, {"nome": "Trolley", "codigo1": "I005929", "codigo2": "A003701"}, {"nome": "TV", "codigo1": "A004978", "codigo2": "A004377"}, {"nome": "Vassoura S/Cabo", "codigo1": "A005556", "codigo2": "I003141"}, {"nome": "Ventilador de coluna", "codigo1": "A001268", "codigo2": "A001268"}, {"nome": "Ventilador de pedestal 70 cm", "codigo1": "A003946", "codigo2": "A003946"}, {"nome": "Álcool gel 5L", "codigo1": "I003016", "codigo2": "I003016"}, {"nome": "Álcool gel pump 450ml", "codigo1": "I005856", "codigo2": "I005856"}];
+
+let lista = [];
+let selecionado = null;
+let activeIndex = -1;
+
+const buscaInput = document.getElementById('busca');
+const suggestionsEl = document.getElementById('suggestions');
+const produtoSelecionadoEl = document.getElementById('produtoSelecionado');
+const qtdInput = document.getElementById('qtd');
+// Nova referência para o input de unidade
+const qtdUnitInput = document.getElementById('qtd-unit');
+
+buscaInput.addEventListener('input', onBusca);
+buscaInput.addEventListener('keydown', onKeyDown);
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.search-wrap')) {
+    suggestionsEl.classList.remove('show');
+  }
+});
+
+function onBusca() {
+  const termo = buscaInput.value.trim().toLowerCase();
+  activeIndex = -1;
+  if (termo.length < 1) {
+    suggestionsEl.classList.remove('show');
+    return;
+  }
+  const resultados = PRODUTOS.filter(p =>
+    p.nome.toLowerCase().includes(termo) ||
+    (p.codigo1 && p.codigo1.toLowerCase().includes(termo)) ||
+    (p.codigo2 && p.codigo2.toLowerCase().includes(termo))
+  ).slice(0, 15);
+
+  if (resultados.length === 0) {
+    suggestionsEl.innerHTML = '<div class="suggestion-item">Nenhum produto encontrado</div>';
+  } else {
+    suggestionsEl.innerHTML = resultados.map((p, i) => `
+      <div class="suggestion-item" data-index="${i}" onclick="selecionarProduto(${JSON.stringify(p).replace(/"/g, '&quot;')})">
+        <div>${p.nome}</div>
+        <div class="codes">${p.codigo1 || '—'} ${p.codigo2 && p.codigo2 !== p.codigo1 ? ' / ' + p.codigo2 : ''}</div>
+      </div>
+    `).join('');
+  }
+  suggestionsEl.classList.add('show');
+  window._resultados = resultados;
+}
+
+function onKeyDown(e) {
+  const items = suggestionsEl.querySelectorAll('.suggestion-item');
+  if (!suggestionsEl.classList.contains('show') || items.length === 0) {
+    if (e.key === 'Enter') { adicionar(); e.preventDefault(); }
+    return;
+  }
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    activeIndex = Math.min(activeIndex + 1, items.length - 1);
+    updateActive(items);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    activeIndex = Math.max(activeIndex - 1, 0);
+    updateActive(items);
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (activeIndex >= 0 && window._resultados[activeIndex]) {
+      selecionarProduto(window._resultados[activeIndex]);
+    } else if (window._resultados && window._resultados.length === 1) {
+      selecionarProduto(window._resultados[0]);
+    } else {
+      adicionar();
+    }
+  } else if (e.key === 'Escape') {
+    suggestionsEl.classList.remove('show');
+  }
+}
+
+function updateActive(items) {
+  items.forEach((el, i) => el.classList.toggle('active', i === activeIndex));
+  if (items[activeIndex]) items[activeIndex].scrollIntoView({ block: 'nearest' });
+}
+
+function selecionarProduto(p) {
+  selecionado = p;
+  buscaInput.value = p.nome;
+  produtoSelecionadoEl.innerHTML = `<strong>Selecionado:</strong> ${p.nome} &nbsp;|&nbsp; Cód.1: <code>${p.codigo1 || '—'}</code> &nbsp;|&nbsp; Cód.2: <code>${p.codigo2 || '—'}</code>`;
+  suggestionsEl.classList.remove('show');
+  qtdInput.focus();
+  qtdInput.select();
+}
+
+function adicionar() {
+  let prod = selecionado;
+  if (!prod) {
+    // Tenta achar pelo texto digitado
+    const termo = buscaInput.value.trim().toLowerCase();
+    if (!termo) {
+      alert('Digite ou selecione um produto.');
+      return;
+    }
+    prod = PRODUTOS.find(p => p.nome.toLowerCase() === termo);
+    if (!prod) {
+      alert('Produto não encontrado. Selecione uma sugestão da lista.');
+      return;
+    }
+  }
+  const qtd = parseInt(qtdInput.value, 10);
+  if (!qtd || qtd < 1) {
+    alert('Informe uma quantidade válida.');
+    return;
+  }
+  // Novo: Obter a unidade selecionada
+  const unit = qtdUnitInput.value;
+
+  // Se já existe, soma a quantidade (agora também considerando a unidade)
+  const existente = lista.find(i => i.nome === prod.nome && i.unit === unit);
+  if (existente) {
+    existente.quantidade += qtd;
+  } else {
+    lista.push({
+      nome: prod.nome,
+      codigo1: prod.codigo1,
+      codigo2: prod.codigo2,
+      quantidade: qtd,
+      unit: unit // Novo: Adicionar a unidade ao item
+    });
+  }
+
+  renderLista();
+  // Limpa para próximo
+  selecionado = null;
+  buscaInput.value = '';
+  produtoSelecionadoEl.innerHTML = '';
+  qtdInput.value = 1;
+  qtdUnitInput.value = 'unidade'; // Novo: Resetar a unidade para o padrão
+  buscaInput.focus();
+}
+
+function remover(index) {
+  lista.splice(index, 1);
+  renderLista();
+}
+
+function atualizarQtd(index, valor) {
+  const q = parseInt(valor, 10);
+  if (q >= 1) {
+    lista[index].quantidade = q;
+  }
+}
+
+function limparLista() {
+  if (lista.length === 0) return;
+  if (confirm('Limpar toda a lista?')) {
+    lista = [];
+    renderLista();
+  }
+}
+
+function renderLista() {
+  const tbody = document.getElementById('lista-body');
+  document.getElementById('contador').textContent = lista.length;
+
+  if (lista.length === 0) {
+    tbody.innerHTML = '<tr id="empty-row"><td colspan="6" class="empty">Nenhum item adicionado ainda.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = lista.map((item, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${item.nome}</td>
+      <td>${item.codigo1 || '—'}</td>
+      <td>${item.codigo2 || '—'}</td>
+      <td>
+        <span class="no-print" style="display:inline-flex; align-items:center; gap:5px;">
+          <input type="number" class="qty-input" min="1" value="${item.quantidade}"
+                 onchange="atualizarQtd(${i}, this.value)">
+          <span style="white-space: nowrap;">${item.unit}</span>
+        </span>
+        <span class="print-only">${item.quantidade} ${item.unit}</span>
+      </td>
+      <td class="no-print">
+        <button class="btn btn-danger" onclick="remover(${i})"><i class="fas fa-times"></i> Remover</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function gerarFolha() {
+  if (lista.length === 0) {
+    alert('Adicione pelo menos um item à lista.');
+    return;
+  }
+  const rq = document.getElementById('rq').value.trim() || '—';
+  const galpao = document.getElementById('galpao').value.trim() || '—';
+  document.getElementById('print-rq').textContent = rq;
+  document.getElementById('print-galpao').textContent = galpao;
+  document.getElementById('print-data').textContent = new Date().toLocaleDateString('pt-BR');
+  window.print();
+}
+
+function gerarPdfECompartilhar() {
+  if (lista.length === 0) {
+    alert('Adicione pelo menos um item à lista para gerar o PDF.');
+    return;
+  }
+
+  // Populate print-only header data first
+  const rq = document.getElementById('rq').value.trim() || '—';
+  const galpao = document.getElementById('galpao').value.trim() || '—';
+  const data = new Date().toLocaleDateString('pt-BR');
+
+  // Create a temporary element to render for PDF
+  const pdfContent = document.createElement('div');
+  pdfContent.style.width = '210mm'; // A4 width
+  pdfContent.style.padding = '10mm'; // Some padding for PDF
+
+  // Manually construct the print header HTML with inline styles for html2pdf
+  const printHeaderHtml = `
+    <div style="margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 12px;">
+      <h1 style="color: #111; margin-bottom: 8px; font-size: 18pt;">LISTA DE SEPARAÇÂO</h1>
+      <div style="display: flex; gap: 40px; font-size: 14px;">
+        <div><strong>RQ:</strong> <span>${rq}</span></div>
+        <div><strong>GALPÃO:</strong> <span>${galpao}</span></div>
+        <div><strong>Data:</strong> <span>${data}</span></div>
+      </div>
+    </div>
+  `;
+  pdfContent.innerHTML = printHeaderHtml;
+
+  const tableWrapClone = document.getElementById('tabela-wrap').cloneNode(true);
+  const clonedTableBody = tableWrapClone.querySelector('#lista-body');
+
+  // Manually adjust the cloned table body for PDF rendering
+  clonedTableBody.querySelectorAll('tr').forEach(row => {
+      // Remove 'no-print' actions column from the clone
+      const actionsCell = row.querySelector('.no-print');
+      if (actionsCell) {
+          actionsCell.remove();
+      }
+
+      if (row.id === 'empty-row') {
+          // If it's the empty row, adjust its colspan
+          const emptyTd = row.querySelector('td.empty');
+          if (emptyTd) {
+              emptyTd.colSpan = 5; // Original was 6, removed 1 column
+          }
+      } else {
+          // For data rows, ensure print-only quantity/unit is visible and remove no-print quantity input
+          const qtyCell = row.children[4]; // Quantity / Unit column
+          if (qtyCell) {
+              const noPrintSpan = qtyCell.querySelector('span.no-print');
+              const printOnlySpan = qtyCell.querySelector('span.print-only');
+
+              if (noPrintSpan) noPrintSpan.remove(); // Remove the non-print version
+              if (printOnlySpan) {
+                  printOnlySpan.style.display = 'block'; // Ensure print version is visible
+                  qtyCell.innerHTML = printOnlySpan.outerHTML; // Only keep the print version
+              }
+          }
+      }
+  });
+
+  pdfContent.appendChild(tableWrapClone);
+
+  // Options for html2pdf
+  const options = {
+    margin: 10,
+    filename: `solicitacao_${rq.replace(/ /g, '_') || 'materiais'}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, logging: false, dpi: 192, letterRendering: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  // Generate PDF
+  html2pdf().from(pdfContent).set(options).outputPdf('blob').then(function (pdfBlob) {
+    // Create a URL for the blob and trigger download
+    const url = URL.createObjectURL(pdfBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = options.filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    // Offer to share via WhatsApp with a message
+    const whatsappMessage = encodeURIComponent(
+      `Olá! Segue a solicitação de materiais gerada. Por favor, anexe o arquivo PDF que acabou de ser baixado.\n\nRQ: ${rq}\nGALPÃO: ${galpao}\nData: ${data}`
+    );
+    const whatsappUrl = `https://api.whatsapp.com/send?text=${whatsappMessage}`;
+    
+    // Open WhatsApp in a new tab
+    window.open(whatsappUrl, '_blank');
+    
+    alert('PDF gerado e baixado! Por favor, anexe o arquivo baixado no WhatsApp.');
+
+  }).catch(err => {
+    console.error("Erro ao gerar PDF:", err);
+    alert('Ocorreu um erro ao gerar o PDF. Verifique o console para mais detalhes.');
+  });
+}
+
+function exportarCSV() {
+  if (lista.length === 0) {
+    alert('Lista vazia.');
+    return;
+  }
+  const rq = document.getElementById('rq').value.trim();
+  const galpao = document.getElementById('galpao').value.trim();
+  // Adicionar "Unidade" ao cabeçalho CSV
+  let csv = 'RQ;GALPÃO;Nome do produto;Código 1;Código 2;Quantidade;Unidade\n';
+  lista.forEach(item => {
+    // Adicionar item.unit ao final da linha CSV
+    csv += `"${rq}";"${galpao}";"${item.nome}";"${item.codigo1}";"${item.codigo2}";${item.quantidade};"${item.unit}"\n`;
+  });
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `solicitacao_${rq || 'materiais'}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
